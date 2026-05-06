@@ -140,14 +140,27 @@ export default function Add() {
           )}
         </div>
 
-        <label className="flex items-start gap-2 text-sm text-gray-600 cursor-pointer select-none">
-          <input type="checkbox" className="rounded mt-0.5" checked={trackEach}
-            onChange={e => setTrackEach(e.target.checked)} />
-          <span>
-            <b>独立追踪每题</b>
-            <span className="text-gray-400 ml-1">勾选后每题单独生成复习计划，否则只整批一起复习</span>
-          </span>
-        </label>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">复习粒度</label>
+          <div className="space-y-2">
+            <label className="flex items-start gap-2 text-sm cursor-pointer select-none">
+              <input type="radio" className="mt-1" checked={trackEach}
+                onChange={() => setTrackEach(true)} />
+              <span>
+                <b>每题独立复习</b>
+                <span className="text-gray-400 ml-1">每道题各自一套艾宾浩斯节点，今日页按"题"显示</span>
+              </span>
+            </label>
+            <label className="flex items-start gap-2 text-sm cursor-pointer select-none">
+              <input type="radio" className="mt-1" checked={!trackEach}
+                onChange={() => setTrackEach(false)} />
+              <span>
+                <b>整批一起复习</b>
+                <span className="text-gray-400 ml-1">只为本批次生成一套节点，今日页显示"批次"卡片</span>
+              </span>
+            </label>
+          </div>
+        </div>
 
         <div className="flex gap-2 pt-2">
           <button type="submit" disabled={submitting} className="btn-primary disabled:opacity-50">

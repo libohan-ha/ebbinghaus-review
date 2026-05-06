@@ -79,19 +79,22 @@ app.post('/api/batches', (req, res) => {
       }
     }
 
-    // 生成复习计划：批次级别始终生成；如 track_each 为真，每题也生成
+    // 生成复习计划：track_each 与 batch 二选一，避免重复
+    // - track_each=true 且有题目 -> 只为每题生成
+    // - 否则 -> 为批次整体生成
     const insertReview = db.prepare(`
       INSERT INTO reviews (target_type, target_id, scheduled_date, offset_day, stage)
       VALUES (?, ?, ?, ?, ?)
     `);
-    for (const p of buildReviewPlan('batch', batchId, study_date)) {
-      insertReview.run(p.target_type, p.target_id, p.scheduled_date, p.offset_day, p.stage);
-    }
-    if (track_each) {
+    if (track_each && itemIds.length > 0) {
       for (const itemId of itemIds) {
         for (const p of buildReviewPlan('item', itemId, study_date)) {
           insertReview.run(p.target_type, p.target_id, p.scheduled_date, p.offset_day, p.stage);
         }
+      }
+    } else {
+      for (const p of buildReviewPlan('batch', batchId, study_date)) {
+        insertReview.run(p.target_type, p.target_id, p.scheduled_date, p.offset_day, p.stage);
       }
     }
 
