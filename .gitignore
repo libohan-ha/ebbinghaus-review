@@ -4,5 +4,6 @@ dist/
 *.db-journal
 *.db-wal
 *.db-shm
+server/uploads/
 .DS_Store
 .env

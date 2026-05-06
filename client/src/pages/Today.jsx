@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api, todayStr, diffDays } from '../api.js';
+import Lightbox, { Thumb } from '../components/Lightbox.jsx';
 
 const stageLabel = (offset) => offset === 0 ? '当天' : `${offset}天后`;
 
@@ -37,6 +38,8 @@ export default function Today() {
   }
   const sortedKeys = Object.keys(groups).sort((a, b) => b.localeCompare(a));
 
+  const [preview, setPreview] = useState(null);
+
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -72,17 +75,19 @@ export default function Today() {
                 <ReviewCard key={r.id} r={r} today={today}
                   feedbackMode={feedbackMode}
                   onComplete={handleComplete}
-                  onPostpone={handlePostpone} />
+                  onPostpone={handlePostpone}
+                  onPreview={setPreview} />
               ))}
             </div>
           </section>
         ))
       )}
+      <Lightbox src={preview} onClose={() => setPreview(null)} />
     </div>
   );
 }
 
-function ReviewCard({ r, today, feedbackMode, onComplete, onPostpone }) {
+function ReviewCard({ r, today, feedbackMode, onComplete, onPostpone, onPreview }) {
   const overdue = r.scheduled_date < today;
   const t = r.target || {};
   const isItem = r.target_type === 'item';
@@ -100,7 +105,11 @@ function ReviewCard({ r, today, feedbackMode, onComplete, onPostpone }) {
           </div>
           {isItem ? (
             <>
-              <p className="font-medium break-words whitespace-pre-wrap">{t.content}</p>
+              {t.image_path && (
+                <Thumb src={t.image_path} size="max-h-64" className="mb-2 w-auto" onClick={() => onPreview(t.image_path)} />
+              )}
+              {t.content && <p className="font-medium break-words whitespace-pre-wrap">{t.content}</p>}
+              {!t.content && !t.image_path && <p className="text-gray-400 italic">（无内容）</p>}
               <p className="text-xs text-gray-400 mt-1">
                 来自批次：<Link to={`/batches/${t.batch_id}`} className="text-indigo-600 hover:underline">{t.batch_title}</Link>
                 {t.tag && <span className="ml-2">#{t.tag}</span>}
@@ -108,6 +117,9 @@ function ReviewCard({ r, today, feedbackMode, onComplete, onPostpone }) {
             </>
           ) : (
             <>
+              {t.image_path && (
+                <Thumb src={t.image_path} size="max-h-64" className="mb-2 w-auto" onClick={() => onPreview(t.image_path)} />
+              )}
               <p className="font-medium">
                 <Link to={`/batches/${t.id}`} className="hover:text-indigo-600">{t.title}</Link>
               </p>

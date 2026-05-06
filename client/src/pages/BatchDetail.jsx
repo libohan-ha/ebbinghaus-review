@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '../api.js';
+import Lightbox, { Thumb } from '../components/Lightbox.jsx';
 
 export default function BatchDetail() {
   const { id } = useParams();
@@ -9,6 +10,7 @@ export default function BatchDetail() {
   const load = () => api.batch(id).then(setData);
   useEffect(() => { load(); }, [id]);
 
+  const [preview, setPreview] = useState(null);
   if (!data) return <p className="text-gray-400">加载中…</p>;
   const { batch, items, reviews } = data;
 
@@ -29,6 +31,9 @@ export default function BatchDetail() {
           <span>📝 {items.length} 题</span>
         </div>
         {batch.note && <p className="text-sm text-gray-600 mt-2">{batch.note}</p>}
+        {batch.image_path && (
+          <Thumb src={batch.image_path} size="max-h-72" className="mt-3 w-auto" onClick={() => setPreview(batch.image_path)} />
+        )}
       </div>
 
       {batchReviews.length > 0 && (
@@ -55,21 +60,28 @@ export default function BatchDetail() {
       {items.length > 0 && (
         <div className="card p-5">
           <h2 className="font-semibold mb-3">题目（{items.length}）</h2>
-          <ol className="space-y-2 list-decimal list-inside">
-            {items.map(it => (
-              <li key={it.id} className="text-sm">
-                <span className="break-words">{it.content}</span>
-                {it.tag && <span className="ml-2 pill bg-gray-100 text-gray-600">#{it.tag}</span>}
-                {itemReviewsByItem[it.id] && (
-                  <span className="ml-2 text-xs text-gray-400">
-                    （{itemReviewsByItem[it.id].filter(r => r.status === 'done').length}/{itemReviewsByItem[it.id].length}）
-                  </span>
-                )}
+          <ol className="space-y-3">
+            {items.map((it, idx) => (
+              <li key={it.id} className="flex gap-3 text-sm">
+                <span className="text-gray-400 shrink-0">{idx + 1}.</span>
+                <div className="flex-1 min-w-0">
+                  {it.image_path && (
+                    <Thumb src={it.image_path} size="max-h-48" className="mb-1 w-auto" onClick={() => setPreview(it.image_path)} />
+                  )}
+                  {it.content && <span className="break-words whitespace-pre-wrap">{it.content}</span>}
+                  {it.tag && <span className="ml-2 pill bg-gray-100 text-gray-600">#{it.tag}</span>}
+                  {itemReviewsByItem[it.id] && (
+                    <span className="ml-2 text-xs text-gray-400">
+                      （{itemReviewsByItem[it.id].filter(r => r.status === 'done').length}/{itemReviewsByItem[it.id].length}）
+                    </span>
+                  )}
+                </div>
               </li>
             ))}
           </ol>
         </div>
       )}
+      <Lightbox src={preview} onClose={() => setPreview(null)} />
     </div>
   );
 }

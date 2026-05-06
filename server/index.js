@@ -1,19 +1,52 @@
 import express from 'express';
 import cors from 'cors';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import crypto from 'crypto';
+import { fileURLToPath } from 'url';
 import { db } from './db.js';
 import { buildReviewPlan, nextAfter, todayStr, addDays, OFFSETS } from './schedule.js';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const UPLOAD_DIR = path.join(__dirname, 'uploads');
+if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+
 const app = express();
 app.use(cors());
-app.use(express.json({ limit: '2mb' }));
+app.use(express.json({ limit: '4mb' }));
+app.use('/uploads', express.static(UPLOAD_DIR, { maxAge: '7d' }));
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, UPLOAD_DIR),
+  filename: (req, file, cb) => {
+    const ext = (path.extname(file.originalname) || '').toLowerCase().slice(0, 8) || '.png';
+    const name = crypto.randomBytes(12).toString('hex') + ext;
+    cb(null, name);
+  }
+});
+const upload = multer({
+  storage,
+  limits: { fileSize: 15 * 1024 * 1024 }, // 15MB
+  fileFilter: (req, file, cb) => {
+    if (!/^image\//.test(file.mimetype)) return cb(new Error('only images allowed'));
+    cb(null, true);
+  }
+});
+
+// ---------- Upload ----------
+app.post('/api/upload', upload.array('files', 30), (req, res) => {
+  const paths = (req.files || []).map(f => `/uploads/${f.filename}`);
+  res.json({ paths });
+});
 
 // ---------- Helpers ----------
 function getTargetMeta(type, id) {
   if (type === 'batch') {
-    return db.prepare('SELECT id, title, source, study_date FROM batches WHERE id = ?').get(id);
+    return db.prepare('SELECT id, title, source, study_date, image_path FROM batches WHERE id = ?').get(id);
   }
   return db.prepare(`
-    SELECT i.id, i.content, i.tag, i.batch_id, b.title AS batch_title, b.study_date
+    SELECT i.id, i.content, i.tag, i.image_path, i.batch_id, b.title AS batch_title, b.study_date
     FROM items i JOIN batches b ON b.id = i.batch_id WHERE i.id = ?
   `).get(id);
 }
@@ -30,15 +63,18 @@ app.post('/api/batches', (req, res) => {
 
   const tx = db.transaction(() => {
     const info = db.prepare(
-      'INSERT INTO batches (title, source, note, study_date) VALUES (?, ?, ?, ?)'
-    ).run(title, source || null, note || null, study_date);
+      'INSERT INTO batches (title, source, note, study_date, image_path) VALUES (?, ?, ?, ?, ?)'
+    ).run(title, source || null, note || null, study_date, req.body.image_path || null);
     const batchId = info.lastInsertRowid;
 
     const itemIds = [];
     if (Array.isArray(items)) {
-      const stmt = db.prepare('INSERT INTO items (batch_id, content, tag) VALUES (?, ?, ?)');
+      const stmt = db.prepare('INSERT INTO items (batch_id, content, tag, image_path) VALUES (?, ?, ?, ?)');
       for (const it of items) {
-        const r = stmt.run(batchId, it.content, it.tag || null);
+        const content = (it.content || '').trim();
+        const image = it.image_path || null;
+        if (!content && !image) continue; // 跳过空题
+        const r = stmt.run(batchId, content, it.tag || null, image);
         itemIds.push(r.lastInsertRowid);
       }
     }

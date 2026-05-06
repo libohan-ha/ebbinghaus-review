@@ -45,3 +45,15 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_reviews_status ON reviews(status);
   CREATE INDEX IF NOT EXISTS idx_items_batch ON items(batch_id);
 `);
+
+// ---------- Migrations ----------
+function hasColumn(table, col) {
+  const rows = db.prepare(`PRAGMA table_info(${table})`).all();
+  return rows.some(r => r.name === col);
+}
+if (!hasColumn('batches', 'image_path')) {
+  db.exec(`ALTER TABLE batches ADD COLUMN image_path TEXT`);
+}
+if (!hasColumn('items', 'image_path')) {
+  db.exec(`ALTER TABLE items ADD COLUMN image_path TEXT`);
+}

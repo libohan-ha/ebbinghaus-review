@@ -9,6 +9,14 @@ async function req(path, options = {}) {
   return res.json();
 }
 
+export async function uploadFiles(files) {
+  const fd = new FormData();
+  for (const f of files) fd.append('files', f);
+  const res = await fetch(base + '/upload', { method: 'POST', body: fd });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json(); // { paths: [...] }
+}
+
 export const api = {
   stats: () => req('/stats'),
   today: (date) => req('/reviews/today' + (date ? `?date=${date}` : '')),

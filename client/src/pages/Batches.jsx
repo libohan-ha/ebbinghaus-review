@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api.js';
+import { Thumb } from '../components/Lightbox.jsx';
 
 export default function Batches() {
   const [batches, setBatches] = useState([]);
@@ -41,6 +42,11 @@ export default function Batches() {
                 </Link>
                 <button className="btn-danger text-xs" onClick={() => handleDelete(b.id)}>删除</button>
               </div>
+              {b.image_path && (
+                <Link to={`/batches/${b.id}`}>
+                  <Thumb src={b.image_path} size="h-24" className="mt-2 w-full" />
+                </Link>
+              )}
               <div className="text-xs text-gray-500 mt-2 flex flex-wrap gap-x-3 gap-y-1">
                 <span>📅 {b.study_date}</span>
                 <span>📝 {b.item_count} 题</span>

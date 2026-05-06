@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { api, todayStr } from '../api.js';
+import Lightbox, { Thumb } from '../components/Lightbox.jsx';
 
 function pad(n) { return String(n).padStart(2, '0'); }
 
@@ -11,6 +12,7 @@ export default function Calendar() {
   const [selected, setSelected] = useState(today);
   const [detail, setDetail] = useState([]);
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const [preview, setPreview] = useState(null);
 
   useEffect(() => {
     api.month(year, month).then(setStats).catch(() => setStats([]));
@@ -121,9 +123,12 @@ export default function Calendar() {
                       }`}>
                         {r.status === 'done' ? '✓' : r.status === 'postponed' ? '推迟' : '待复习'}
                       </span>
+                      {r.target?.image_path && (
+                        <Thumb src={r.target.image_path} size="h-10 w-10" onClick={() => setPreview(r.target.image_path)} />
+                      )}
                       <span className="flex-1 break-words">
                         {r.target_type === 'item'
-                          ? <>{r.target?.content} <span className="text-gray-400 text-xs">@ {r.target?.batch_title}</span></>
+                          ? <>{r.target?.content || <span className="text-gray-400">（图片题）</span>} <span className="text-gray-400 text-xs">@ {r.target?.batch_title}</span></>
                           : r.target?.title}
                       </span>
                       <span className="text-xs text-gray-400 shrink-0">第 {r.stage + 1} 次</span>
@@ -135,6 +140,7 @@ export default function Calendar() {
           </div>
         )}
       </div>
+      <Lightbox src={preview} onClose={() => setPreview(null)} />
     </div>
   );
 }
