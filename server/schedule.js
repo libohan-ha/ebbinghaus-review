@@ -1,5 +1,5 @@
-// 经典艾宾浩斯：做题当天 + 1, 2, 4, 7, 15, 30 天，共 7 个节点
-export const OFFSETS = [0, 1, 2, 4, 7, 15, 30];
+// 艾宾浩斯遗忘曲线：做题当天 + 1, 3, 7, 15, 30, 60, 90 天，共 8 个节点
+export const OFFSETS = [0, 1, 3, 7, 15, 30, 60, 90];
 
 export function addDays(dateStr, days) {
   const d = new Date(dateStr + 'T00:00:00');

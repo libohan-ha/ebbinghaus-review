@@ -202,7 +202,7 @@ app.post('/api/reviews/:id/complete', (req, res) => {
       db.prepare(`DELETE FROM reviews 
         WHERE target_type=? AND target_id=? AND status IN ('pending','postponed') AND id != ?`)
         .run(r.target_type, r.target_id, id);
-      // 以「今天」作为新的起点，重排后续 6 个节点（1,2,4,7,15,30）
+      // 以「今天」作为新的起点，重排后续 7 个节点（1,3,7,15,30,60,90）
       const newStart = todayStr();
       const insertReview = db.prepare(`
         INSERT INTO reviews (target_type, target_id, scheduled_date, offset_day, stage)
