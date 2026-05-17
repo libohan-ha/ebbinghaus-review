@@ -169,7 +169,7 @@ export default function Add() {
           <button type="button" className="btn-ghost" onClick={() => nav(-1)}>取消</button>
         </div>
         <p className="text-xs text-gray-400">
-          复习节点：当天 + 1, 3, 7, 15, 30, 60, 90 天，共 8 次
+          复习节点：+1, 3, 7, 15, 30, 60, 90 天，共 7 次
         </p>
       </form>
 

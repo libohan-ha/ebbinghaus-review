@@ -1,5 +1,5 @@
-// 艾宾浩斯遗忘曲线：做题当天 + 1, 3, 7, 15, 30, 60, 90 天，共 8 个节点
-export const OFFSETS = [0, 1, 3, 7, 15, 30, 60, 90];
+// 艾宾浩斯遗忘曲线：做题次日起 + 1, 3, 7, 15, 30, 60, 90 天，共 7 个节点
+export const OFFSETS = [1, 3, 7, 15, 30, 60, 90];
 
 export function addDays(dateStr, days) {
   const d = new Date(dateStr + 'T00:00:00');
@@ -34,8 +34,7 @@ export function buildReviewPlan(targetType, targetId, studyDate) {
 // 返回 null 表示已结束
 export function nextAfter(currentStage, studyDate, feedback) {
   if (feedback === 'forgot') {
-    // 重置到 stage 1（即明天再来一遍 1d 节点）
-    return { stage: 1, scheduled_date: addDays(studyDate, OFFSETS[1]) };
+    return { stage: 0, scheduled_date: addDays(studyDate, OFFSETS[0]) };
   }
   const nextStage = currentStage + 1;
   if (nextStage >= OFFSETS.length) return null;
