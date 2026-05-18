@@ -6,6 +6,9 @@ import { Thumb } from '../components/Lightbox.jsx';
 export default function Batches() {
   const [batches, setBatches] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [editId, setEditId] = useState(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDate, setEditDate] = useState('');
 
   const load = async () => {
     setLoading(true);
@@ -17,6 +20,18 @@ export default function Batches() {
   const handleDelete = async (id) => {
     if (!confirm('确认删除该批次及其所有题目和复习记录？')) return;
     await api.deleteBatch(id);
+    await load();
+  };
+
+  const startEdit = (b) => {
+    setEditId(b.id);
+    setEditTitle(b.title);
+    setEditDate(b.study_date);
+  };
+
+  const saveEdit = async () => {
+    await api.updateBatch(editId, { title: editTitle, study_date: editDate });
+    setEditId(null);
     await load();
   };
 
@@ -37,18 +52,38 @@ export default function Batches() {
           {batches.map(b => (
             <div key={b.id} className="card p-4 hover:shadow-md transition">
               <div className="flex justify-between items-start gap-2">
-                <Link to={`/batches/${b.id}`} className="font-semibold hover:text-indigo-600 break-words flex-1">
-                  {b.title}
-                </Link>
-                <button className="btn-danger text-xs" onClick={() => handleDelete(b.id)}>删除</button>
+                {editId === b.id ? (
+                  <input className="input flex-1" value={editTitle} onChange={e => setEditTitle(e.target.value)} />
+                ) : (
+                  <Link to={`/batches/${b.id}`} className="font-semibold hover:text-indigo-600 break-words flex-1">
+                    {b.title}
+                  </Link>
+                )}
+                <div className="flex gap-1">
+                  {editId === b.id ? (
+                    <>
+                      <button className="btn-primary text-xs" onClick={saveEdit}>保存</button>
+                      <button className="btn-ghost text-xs" onClick={() => setEditId(null)}>取消</button>
+                    </>
+                  ) : (
+                    <>
+                      <button className="btn-ghost text-xs" onClick={() => startEdit(b)}>编辑</button>
+                      <button className="btn-danger text-xs" onClick={() => handleDelete(b.id)}>删除</button>
+                    </>
+                  )}
+                </div>
               </div>
-              {b.image_path && (
+              {b.image_path && editId !== b.id && (
                 <Link to={`/batches/${b.id}`}>
                   <Thumb src={b.image_path} size="h-24" className="mt-2 w-full" />
                 </Link>
               )}
               <div className="text-xs text-gray-500 mt-2 flex flex-wrap gap-x-3 gap-y-1">
-                <span>📅 {b.study_date}</span>
+                {editId === b.id ? (
+                  <input type="date" className="input text-xs" value={editDate} onChange={e => setEditDate(e.target.value)} />
+                ) : (
+                  <span>📅 {b.study_date}</span>
+                )}
                 <span>📝 {b.item_count} 题</span>
                 <span>✓ {b.done_count}/{b.total_count}</span>
                 {b.source && <span>📚 {b.source}</span>}

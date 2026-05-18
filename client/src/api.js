@@ -28,6 +28,7 @@ export const api = {
   batches: () => req('/batches'),
   batch: (id) => req(`/batches/${id}`),
   createBatch: (data) => req('/batches', { method: 'POST', body: JSON.stringify(data) }),
+  updateBatch: (id, data) => req(`/batches/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteBatch: (id) => req(`/batches/${id}`, { method: 'DELETE' }),
 };
 

@@ -143,6 +143,23 @@ app.delete('/api/batches/:id', (req, res) => {
   res.json({ ok: true });
 });
 
+app.put('/api/batches/:id', (req, res) => {
+  const id = Number(req.params.id);
+  const { title, study_date } = req.body;
+  const batch = db.prepare('SELECT * FROM batches WHERE id = ?').get(id);
+  if (!batch) return res.status(404).json({ error: 'not found' });
+  if (title !== undefined) db.prepare('UPDATE batches SET title = ? WHERE id = ?').run(title, id);
+  if (study_date !== undefined) {
+    db.prepare('UPDATE batches SET study_date = ? WHERE id = ?').run(study_date, id);
+    db.prepare(`DELETE FROM reviews WHERE target_type='batch' AND target_id=? AND status='pending'`).run(id);
+    for (const p of buildReviewPlan('batch', id, study_date)) {
+      db.prepare('INSERT INTO reviews (target_type, target_id, scheduled_date, offset_day, stage) VALUES (?,?,?,?,?)')
+        .run(p.target_type, p.target_id, p.scheduled_date, p.offset_day, p.stage);
+    }
+  }
+  res.json({ ok: true });
+});
+
 // ---------- Today / Date ----------
 // 返回某天应复习项；包含「过期未完成」（仅在 today 视图）
 app.get('/api/reviews/today', (req, res) => {
